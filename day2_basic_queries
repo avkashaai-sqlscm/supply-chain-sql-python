@@ -1,0 +1,9 @@
+select * from sales_data_sample where country = 'France' limit 3; 
+SELECT * FROM sales_data_sample LIMIT 5
+  SELECT name from sqlite_master where type='table';
+select productline,country,sales from sales_data_sample limit 2
+  select * from sales_data_sample where country = 'France' limit 3;
+select productline,country,sales from sales_data_sample order by sales desc;
+select * from sales_data_sample where sales > 11000 and country = 'Spain';
+select * from sales_data_sample where country = 'France' and country is NULL; 
+select * from sales_data_sample where country = 'France' limit 3;
