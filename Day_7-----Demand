@@ -1,0 +1,75 @@
+SELECT 
+    f.sku,
+    f.loc,
+    f.week,
+    f.fcst_qty,
+    a.sellout_qty
+FROM demand_fcst f
+LEFT JOIN actuals3 a
+    ON f.sku = a.sku
+   AND f.loc = a.loc
+   AND f.week = a.week
+ORDER BY f.sku, f.week;
+-------------------
+SELECT
+    sku,
+    loc,
+    week,
+    sellout_qty,
+    LAG(sellout_qty, 1) OVER (
+        PARTITION BY sku, loc 
+        ORDER BY week
+    ) AS naive_fcst
+FROM actuals3
+ORDER BY sku, week
+LIMIT 30;
+--------------
+WITH base AS (
+    SELECT
+        sku,
+        loc,
+        week,
+        sellout_qty,
+        LAG(sellout_qty) OVER (
+            PARTITION BY sku, loc ORDER BY week
+        ) AS prev_week_qty
+    FROM actuals3
+)
+SELECT
+    sku,
+    loc,
+    week,
+    sellout_qty,
+    prev_week_qty,
+    sellout_qty - prev_week_qty AS wow_change
+FROM base
+ORDER BY sku, week
+LIMIT 30;
+----------
+WITH base AS (
+    SELECT
+        sku,
+        loc,
+        week,
+        sellout_qty,
+        LAG(sellout_qty) OVER (
+            PARTITION BY sku, loc ORDER BY week
+        ) AS prev_week_qty
+    FROM actuals3
+)
+SELECT
+    sku,
+    loc,
+    week,
+    sellout_qty,
+    prev_week_qty,
+    ROUND(
+        (sellout_qty - prev_week_qty) 
+        / NULLIF(prev_week_qty, 0)
+        * 100, 
+        2
+    ) AS wow_pct
+FROM base
+WHERE prev_week_qty IS NOT NULL
+ORDER BY ABS(wow_pct);
+---------------------------
