@@ -1,0 +1,47 @@
+SELECT 
+    sku,
+    loc,
+    week,
+    sellout_qty,
+    fcst_qty,
+    ABS(sellout_qty - fcst_qty) AS abs_error,
+    CASE 
+        WHEN sellout_qty = 0 THEN NULL
+        ELSE ABS(sellout_qty - fcst_qty) * 100.0 / sellout_qty
+    END AS pct_error
+FROM dfa
+ORDER BY sku, loc, week;
+---------
+ALTER TABLE dfa ADD COLUMN abs_error REAL;
+ALTER TABLE dfa ADD COLUMN pct_error REAL;
+
+UPDATE dfa
+SET abs_error = ABS(sellout_qty - fcst_qty),
+    pct_error = CASE WHEN sellout_qty = 0 THEN NULL ELSE ABS(sellout_qty - fcst_qty) * 1.0 / sellout_qty END;
+SELECT sku, loc, ROUND(AVG(pct_error)*100,2) AS MAPE_pct FROM dfa GROUP BY sku, loc;
+SELECT
+  ROUND( SUM(abs_error) * 1.0 / NULLIF(SUM(sellout_qty),0) , 4) AS WAPE_overall
+FROM dfa;
+SELECT
+  ROUND( SUM(abs_error) * 1.0 / NULLIF(SUM(sellout_qty),0) , 4) AS WAPE_overall
+FROM dfa;
+SELECT
+  loc,
+  ROUND( SUM(abs_error) * 1.0 / NULLIF(SUM(sellout_qty),0) , 4) AS WAPE_by_loc
+FROM dfa
+GROUP BY loc
+ORDER BY WAPE_by_loc DESC;
+
+
+
+
+
+SELECT 
+    sku,
+    loc,
+    AVG(fcst_qty - sellout_qty) AS bias
+FROM dfa
+GROUP BY sku, loc
+ORDER BY bias DESC;
+
+
